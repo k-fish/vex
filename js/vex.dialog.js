@@ -64,19 +64,40 @@
     dialog.defaultConfirmOptions = {
       message: 'Confirm'
     };
+
+    dialog.keyDownHandler = function(e) {
+      var evt = e || window.event;
+      var keyCode = evt.which || evt.keyCode;
+      var firstFocused = dialog.$first.is(':focus');
+      var lastFocused = dialog.$last.is(':focus');
+
+      if(keyCode === 9) { // TAB pressed
+        if (firstFocused && evt.shiftKey) {
+          if(evt.preventDefault) evt.preventDefault();
+          else evt.returnValue = false;
+          dialog.$last.focus();
+        } else if (lastFocused && !evt.shiftKey){
+          if(evt.preventDefault) evt.preventDefault();
+          else evt.returnValue = false;
+          dialog.$first.focus();
+        }
+      }
+    }
     dialog.open = function(options) {
-      var $vexContent, beforeClose;
+      var $vexContent;
       options = $.extend({}, vex.defaultOptions, dialog.defaultOptions, options);
       options.content = dialog.buildDialogForm(options);
-      beforeClose = options.beforeClose;
-      options.beforeClose = function($vexContent, config) {
-        options.callback(config.value);
-        return typeof beforeClose === "function" ? beforeClose($vexContent, config) : void 0;
+      options.beforeClose = function($vexContent) {
+        return options.callback($vexContent.data().vex.value);
       };
       $vexContent = vex.open(options);
-      if (options.focusFirstInput) {
-        $vexContent.find('button[type="submit"], button[type="button"], input[type="submit"], input[type="button"], textarea, input[type="date"], input[type="datetime"], input[type="datetime-local"], input[type="email"], input[type="month"], input[type="number"], input[type="password"], input[type="search"], input[type="tel"], input[type="text"], input[type="time"], input[type="url"], input[type="week"]').first().focus();
-      }
+      dialog.$first = $vexContent.find('button[type="submit"], button[type="button"], input[type="submit"], input[type="button"], textarea, input[type="date"], input[type="datetime"], input[type="datetime-local"], input[type="email"], input[type="month"], input[type="number"], input[type="password"], input[type="search"], input[type="tel"], input[type="text"], input[type="time"], input[type="url"], input[type="week"]').first();
+      dialog.$last = $vexContent.find('button[type="submit"], button[type="button"], input[type="submit"], input[type="button"], textarea, input[type="date"], input[type="datetime"], input[type="datetime-local"], input[type="email"], input[type="month"], input[type="number"], input[type="password"], input[type="search"], input[type="tel"], input[type="text"], input[type="time"], input[type="url"], input[type="week"]').last();
+
+      dialog.$first.focus();
+      dialog.$last.keydown(dialog.keyDownHandler);
+      dialog.$first.keydown(dialog.keyDownHandler);
+
       return $vexContent;
     };
     dialog.alert = function(options) {
